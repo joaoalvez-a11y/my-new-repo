@@ -1,23 +1,61 @@
+import streamlit as st
 import pandas as pd
 import plotly.express as px
-import streamlit as st
 
-car_data = pd.read_csv('vehicles.csv')
+df = pd.read_csv("vehicles.csv")
 
-st.header('Dashboard de anúncios de veículos')
+df["is_4wd"] = df["is_4wd"].fillna(0)
 
-st.write('Este aplicativo permite visualizar dados de anúncios de veículos usados.')
+st.header("Dashboard de Análise de Veículos Usados")
 
-hist_button = st.button('Criar histograma de quilometragem')
+st.write("""
+Esta aplicação foi desenvolvida para funcionários de uma empresa fictícia  do mercado automotivo.
 
-if hist_button:
-    st.write('Distribuição da quilometragem dos veículos')
-    fig = px.histogram(car_data, x='odometer')
-    st.plotly_chart(fig, use_container_width=True)
+O objetivo é permitir a consulta e comparação de anúncios de veículos usados,
+ajudando na análise de preços, quilometragem, ano do modelo, condição e características dos veículos.
+""")
 
-scatter_button = st.button('Criar gráfico de dispersão: preço x quilometragem')
+st.subheader("Filtros")
 
-if scatter_button:
-    st.write('Relação entre preço e quilometragem dos veículos')
-    fig = px.scatter(car_data, x='odometer', y='price')
-    st.plotly_chart(fig, use_container_width=True)
+show_4wd = st.checkbox("Mostrar apenas veículos 4x4")
+
+if show_4wd:
+    df_filtered = df[df["is_4wd"] == 1]
+else:
+    df_filtered = df
+
+st.subheader("Distribuição dos preços dos veículos")
+
+df_price = df_filtered[df_filtered["price"] <= 16839] # Filtrando preços até US$ 16.839, que é o valor até 75% dos preços, para evitar distorção causada por outliers
+
+fig_price = px.histogram(
+    df_price,
+    x="price",
+    nbins=50,
+    title="Distribuição dos preços até US$ 20.000",
+    labels={"price": "Preço"}
+)
+
+st.plotly_chart(fig_price)
+
+st.subheader("Relação entre preço e quilometragem")
+
+df_scatter = df_filtered[
+    (df_filtered["price"] <= 16839) &
+    (df_filtered["odometer"] <= 100000)
+]
+
+fig_scatter = px.scatter(
+    df_scatter,
+    x="odometer",
+    y="price",
+    color="condition",
+    title="Preço x Quilometragem por condição do veículo",
+    labels={
+        "odometer": "Quilometragem",
+        "price": "Preço",
+        "condition": "Condição"
+    }
+)
+
+st.plotly_chart(fig_scatter)
